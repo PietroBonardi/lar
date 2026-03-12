@@ -83,7 +83,7 @@ class LiftAreaRatio:
         df["bin"] = cuts
 
         # --- model lift (real scores) ---
-        lift_model = self._compute_lift(df, N, ER, oracle=False)
+        lift_model = self._compute_lift(df, N, ER)
 
         # --- oracle lift (all labels ranked first, independent of model scores) ---
         # Assign artificial scores: top B positions = labels, rest = goods
@@ -95,7 +95,7 @@ class LiftAreaRatio:
         df_oracle["bin"] = pd.qcut(
             df_oracle.scores, self.n_percentiles, duplicates="drop"
         )
-        lift_oracle = self._compute_lift(df_oracle, N, ER, oracle=True)
+        lift_oracle = self._compute_lift(df_oracle, N, ER)
 
         # --- compute the area under ERR curve ---
         # Compute the lift
@@ -114,8 +114,14 @@ class LiftAreaRatio:
             lift_oracle=lift_oracle,
         )
 
-    def plot(self, result: LARResult, title: str = "Lift Area Ratio",
-         figsize: tuple = (9, 5), save: bool=False, folder_path: str = "") -> None:
+    def plot(
+        self,
+        result: LARResult,
+        title: str = "Lift Area Ratio",
+        figsize: tuple = (9, 5),
+        save: bool = False,
+        folder_path: str = "",
+    ) -> None:
         """
         Plot oracle, model, and random lift curves with shaded areas.
 
@@ -139,28 +145,51 @@ class LiftAreaRatio:
         _COLOR_MODEL_LINE = "#3362C4"
 
         # shaded areas
-        ax.fill_between(pct_o, 1, eer_o, alpha=0.15, color=_COLOR_ORACLE, label="_nolegend_")
-        ax.fill_between(pct_m, 1, eer_m, alpha=0.30, color=_COLOR_MODEL, label="_nolegend_") 
+        ax.fill_between(
+            pct_o, 1, eer_o, alpha=0.15, color=_COLOR_ORACLE, label="_nolegend_"
+        )
+        ax.fill_between(
+            pct_m, 1, eer_m, alpha=0.30, color=_COLOR_MODEL, label="_nolegend_"
+        )
 
         # annotate O and A
         ax.text(
             pct_o.iloc[len(pct_o) // 4],
             eer_o.iloc[len(eer_o) // 4] * 0.6,
-            "O", fontsize=20, color=_COLOR_ORACLE_LINE, alpha=0.6, ha="center"
+            "O",
+            fontsize=20,
+            color=_COLOR_ORACLE_LINE,
+            alpha=0.6,
+            ha="center",
         )
         ax.text(
             pct_m.iloc[len(pct_m) // 3],
             eer_m.iloc[len(eer_m) // 3] * 0.55,
-            "A", fontsize=20, color=_COLOR_MODEL_LINE, alpha=0.9, ha="center"
+            "A",
+            fontsize=20,
+            color=_COLOR_MODEL_LINE,
+            alpha=0.9,
+            ha="center",
         )
 
         # lines
-        ax.plot(pct_o, eer_o, color=_COLOR_ORACLE_LINE, linewidth=2,
-                label=f"Oracle (area={result.area_oracle})")
-        ax.plot(pct_m, eer_m, color=_COLOR_MODEL_LINE, linewidth=2,
-                label=f"Model  (area={result.area_model})")
-        ax.axhline(1, color="red", linewidth=1.0, linestyle="--",
-                label="Random (err=1)")
+        ax.plot(
+            pct_o,
+            eer_o,
+            color=_COLOR_ORACLE_LINE,
+            linewidth=2,
+            label=f"Oracle (area={result.area_oracle})",
+        )
+        ax.plot(
+            pct_m,
+            eer_m,
+            color=_COLOR_MODEL_LINE,
+            linewidth=2,
+            label=f"Model  (area={result.area_model})",
+        )
+        ax.axhline(
+            1, color="red", linewidth=1.0, linestyle="--", label="Random (err=1)"
+        )
 
         # labels & formatting
         ax.set_xlabel("Percentile (%)", color="black")
@@ -168,18 +197,28 @@ class LiftAreaRatio:
         ax.set_title(
             f"{title}\nLAR = A/O = {result.lar}  |  "
             f"N={result.N}, B={result.B}, ER={result.event_rate:.1%}",
-            color="black", fontsize=11
+            color="black",
+            fontsize=11,
         )
         ax.tick_params(colors="black")
-        ax.legend(facecolor="white", labelcolor="black", fontsize=9,
-                framealpha=1, edgecolor="black")
+        ax.legend(
+            facecolor="white",
+            labelcolor="black",
+            fontsize=9,
+            framealpha=1,
+            edgecolor="black",
+        )
         for spine in ax.spines.values():
             spine.set_edgecolor("black")
 
         plt.tight_layout()
         if save:
-            plt.savefig("{save_path}/lar_plot_white.png",
-                        dpi=150, bbox_inches="tight", facecolor="white")
+            plt.savefig(
+                "{save_path}/lar_plot_white.png",
+                dpi=150,
+                bbox_inches="tight",
+                facecolor="white",
+            )
         plt.show()
 
     def summary(self, result: LARResult) -> None:
@@ -211,9 +250,7 @@ class LiftAreaRatio:
         return scores, labels
 
     @staticmethod
-    def _compute_lift(
-        df: pd.DataFrame, N: int, ER: float, oracle: bool = False
-    ) -> pd.DataFrame:
+    def _compute_lift(df: pd.DataFrame, N: int, ER: float) -> pd.DataFrame:
         """Sort by scores descending, compute cumulative err at each percentile."""
         dt = df.sort_values("scores", ascending=False).copy()
         dt["cum_bads"] = dt["labels"].cumsum()
@@ -228,8 +265,8 @@ class LiftAreaRatio:
         dt = dt.sort_values("pct_bucket")
 
         # prepend origin
-        max_err = dt["err"].iloc[0]
-        origin = pd.DataFrame({"percentile": [0], "er": [ER], "err": [max_err]})
+        first_err = dt["err"].iloc[0]
+        origin = pd.DataFrame({"percentile": [0], "er": [ER], "err": [first_err]})
         dt = pd.concat([origin, dt[["percentile", "er", "err"]]], ignore_index=True)
 
         return dt
