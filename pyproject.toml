@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lift-area-ratio"
-version = "0.1.1"
+version = "0.1.2"
 description = "Lift Area Ratio — a population-independent model discrimination metric"
 license = {file = "LICENSE"}
 readme = "README.md"
