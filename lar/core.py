@@ -127,9 +127,11 @@ class LiftAreaRatio:
 
         Parameters
         ----------
-        result  : LARResult from .fit()
-        title   : plot title
-        figsize : figure size
+        result      : LARResult from .fit()
+        title       : plot title
+        figsize     : figure size
+        save        : store plot
+        file_name   : file name
         """
         _COLOR_ORACLE = "#A0F2EA"
         _COLOR_ORACLE_LINE = "#71A39F"

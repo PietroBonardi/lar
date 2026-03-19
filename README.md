@@ -49,15 +49,7 @@ Since both areas are scaled by the same oracle, the population event rate cancel
 ## Installation
 
 ```bash
-pip install lar
-```
-
-Or install from source:
-
-```bash
-git clone https://github.com/yourname/lar.git
-cd lar
-pip install -e .
+pip install lift-area-ration
 ```
 
 ---
@@ -117,7 +109,7 @@ lar.plot(result, title="My Model")
 ### `.summary(result)`
 Prints a formatted summary of the LAR result.
 
-### `.plot(result, title, figsize)`
+### `.plot(result, title, figsize, save=False, file_name="")`
 Plots oracle, model and random lift curves with shaded areas A and O.
 
 ### `LARResult` fields
