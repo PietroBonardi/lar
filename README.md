@@ -49,7 +49,7 @@ Since both areas are scaled by the same oracle, the population event rate cancel
 ## Installation
 
 ```bash
-pip install lift-area-ration
+pip install lift-area-ratio
 ```
 
 ---
