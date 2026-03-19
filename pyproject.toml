@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lift-area-ratio"
-version = "0.1.0"
+version = "0.1.1"
 description = "Lift Area Ratio — a population-independent model discrimination metric"
 license = {file = "LICENSE"}
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "numpy>=2.4.0",
-    "pandas>=2.2.0",
+    "numpy>=2.2.0",
+    "pandas>=2.2.3",
     "matplotlib>=3.10.0",
 ]
