@@ -129,7 +129,7 @@ Plots oracle, model and random lift curves with shaded areas A and O.
 
 ## Requirements
 
-- Python >= 3.8
-- numpy
-- pandas
-- matplotlib
+- Python >= 3.10
+- numpy>=2.2.0
+- pandas>=2.3.0
+- matplotlib>=3.10.0
