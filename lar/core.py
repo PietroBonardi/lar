@@ -80,7 +80,7 @@ class LiftAreaRatio:
                 f"Duplicate edges detected — using {actual_bins} bins "
                 f"instead of {self.n_percentiles}."
             )
-        df["bin"] = cuts
+        df.loc[:, "bin"] = cuts
 
         # --- model lift (real scores) ---
         lift_model = self._compute_lift(df, N, ER)
@@ -92,7 +92,7 @@ class LiftAreaRatio:
         df_oracle = pd.DataFrame(
             {"scores": oracle_scores, "labels": oracle_target, "obs": 1}
         )
-        df_oracle["bin"] = pd.qcut(
+        df_oracle.loc[:, "bin"] = pd.qcut(
             df_oracle.scores, self.n_percentiles, duplicates="drop"
         )
         lift_oracle = self._compute_lift(df_oracle, N, ER)
@@ -118,9 +118,9 @@ class LiftAreaRatio:
         self,
         result: LARResult,
         title: str = "Lift Area Ratio",
-        figsize: tuple = (9, 5),
+        figsize: tuple[int, int] = (9, 5),
         save: bool = False,
-        folder_path: str = "",
+        file_name: str = "",
     ) -> None:
         """
         Plot oracle, model, and random lift curves with shaded areas.
@@ -131,6 +131,11 @@ class LiftAreaRatio:
         title   : plot title
         figsize : figure size
         """
+        _COLOR_ORACLE = "#A0F2EA"
+        _COLOR_ORACLE_LINE = "#71A39F"
+        _COLOR_MODEL = "#2c6fad"
+        _COLOR_MODEL_LINE = "#3362C4"
+        
         fig, ax = plt.subplots(figsize=figsize)
         fig.patch.set_facecolor("white")
         ax.set_facecolor("white")
@@ -139,10 +144,6 @@ class LiftAreaRatio:
         pct_m = result.lift_model.percentile
         eer_o = result.lift_oracle.err
         eer_m = result.lift_model.err
-        _COLOR_ORACLE = "#A0F2EA"
-        _COLOR_ORACLE_LINE = "#71A39F"
-        _COLOR_MODEL = "#2c6fad"
-        _COLOR_MODEL_LINE = "#3362C4"
 
         # shaded areas
         ax.fill_between(
@@ -214,7 +215,7 @@ class LiftAreaRatio:
         plt.tight_layout()
         if save:
             plt.savefig(
-                "{save_path}/lar_plot_white.png",
+                file_name,
                 dpi=150,
                 bbox_inches="tight",
                 facecolor="white",
@@ -253,14 +254,14 @@ class LiftAreaRatio:
     def _compute_lift(df: pd.DataFrame, N: int, ER: float) -> pd.DataFrame:
         """Sort by scores descending, compute cumulative err at each percentile."""
         dt = df.sort_values("scores", ascending=False).copy()
-        dt["cum_bads"] = dt["labels"].cumsum()
-        dt["cum_obs"] = dt["obs"].cumsum()
-        dt["percentile"] = (dt["cum_obs"] / N * 100).round(2)
-        dt["er"] = (dt["cum_bads"] / dt["cum_obs"]).round(4)
-        dt["err"] = (dt["er"] / ER).round(4)
+        dt.loc[:, "cum_bads"] = dt["labels"].cumsum()
+        dt.loc[:, "cum_obs"] = dt["obs"].cumsum()
+        dt.loc[:, "percentile"] = (dt["cum_obs"] / N * 100).round(2)
+        dt.loc[:, "er"] = (dt["cum_bads"] / dt["cum_obs"]).round(4)
+        dt.loc[:, "err"] = (dt["er"] / ER).round(4)
 
         # downsample to percentile-level (keep last row per percentile bucket)
-        dt["pct_bucket"] = (dt["percentile"] * 1).round(0)
+        dt.loc[:, "pct_bucket"] = (dt["percentile"] * 1).round(0)
         dt = dt.groupby("pct_bucket", as_index=False).last()
         dt = dt.sort_values("pct_bucket")
 

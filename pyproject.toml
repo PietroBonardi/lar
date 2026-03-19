@@ -6,13 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "lar"
 version = "0.1.0"
 description = "Lift Area Ratio — a population-independent model discrimination metric"
-readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
-    "numpy",
-    "pandas",
-    "matplotlib",
+    "numpy>=2.4.0",
+    "pandas>=2.2.0",
+    "matplotlib>=3.10.0",
 ]
-
-[project.urls]
-Homepage = "https://github.com/PietroBonardi/lar"
