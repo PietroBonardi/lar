@@ -1,135 +1,125 @@
-# LAR — Lift Area Ratio
+# LAR // Lift Area Ratio
 
-A population-independent metric for binary classification model discrimination, designed as a more interpretable alternative to ROC-AUC.
+A population-independent discrimination metric — interpretable alternative to ROC-AUC
 
----
 
-## Why not just use AUC?
 
-AUC averages performance across all thresholds equally — including thresholds you'll never use in production. Two models can have the same AUC but behave very differently at your actual operating point.
+## [01] - why not AUC?
 
-LAR answers a more practical question:
+AUC averages performance across all thresholds equally. Two models can have the same AUC but behave very differently at your actual operating point.
 
-> *"How much better than random is my model at concentrating positives at the top of the ranking?"*
+```
+// **LAR asks**
+// how much better than random is my model at concentrating positives at the top of the ranking?
 
-And unlike AUC, LAR is **population independent** — it gives comparable scores across datasets with different event rates.
-
----
-
-## How it works
-
-LAR is based on the **Event Rate Ratio (ERR)** — at a given percentile, how much more concentrated are positives compared to the overall population:
-
-$$ERR = \frac{b/n}{B/N}$$
-
-Where:
-- `N` = total observations, `B` = total positives
-- `n` = observations up to percentile, `b` = positives found up to percentile
-
-Plotting ERR across all percentiles gives three reference curves:
-
-- 🔵 **Oracle** — perfect model, all positives ranked first. ERR starts at `N/B` and drops sharply once all positives are found
-- ⚫ **Your model** — sits between oracle and random
-- 🔴 **Random** — flat line at ERR = 1, no discrimination
-
-LAR is the ratio of the areas above the random line:
-
-$$LAR = \frac{A}{O} = \frac{\text{area under model curve}}{\text{area under oracle curve}}$$
-
-| LAR value | Meaning |
-|-----------|---------|
-| 0 | model has no skill (= random) |
-| 1 | perfect model (= oracle) |
-| 0.83 | model captures 83% of perfect discrimination |
-
-Since both areas are scaled by the same oracle, the population event rate cancels out — making LAR directly comparable across different datasets and models.
-
----
-
-## Installation
-
-```bash
-pip install lift-area-ratio
 ```
 
 ---
 
-## Quick start
+## [02] - how it works
+
+LAR is based on **ERR** (Event Rate Ratio) — at a given percentile, how much more concentrated are positives compared to the overall population:
+
+```
+ERR = (b / n) / (B / N)
+
+  N := total observations
+  B := total positives
+  n := observations up to percentile
+  b := positives found up to percentile
+```
+
+Three reference curves:
+
+```
+[oracle]  ERR starts at N/B -> drops once all positives are found  /* upper bound */
+[model]   sits between oracle and random
+[random]  ERR = 1 flat                                             /* no skill    */
+```
+
+LAR := ratio of areas above the random line:
+
+```
+LAR = A / O
+    = area(model) / area(oracle)
+    ∈ [0, 1]
+```
+
+| `LAR` | meaning |
+|-------|---------|
+| `0.00` | no skill |
+| `0.83` | 83% of perfect discrimination |
+| `1.00` | oracle |
+
+// NOTE: event rate cancels out - directly comparable across datasets
+
+---
+
+## [03] - install
+
+```bash
+$ pip install lift-area-ratio
+```
+
+---
+
+## [04] - usage
 
 ```python
-import numpy as np
 from lar import LiftAreaRatio
 
-# your model scores and true labels
-scores = model.predict_proba(X)[:, 1]
-y = df["default_flag"]
-
-# compute LAR
-lar = LiftAreaRatio(n_percentiles=100)
+lar    = LiftAreaRatio(n_percentiles=100)
 result = lar.fit(scores, y)
 
-# print summary
 lar.summary(result)
-# =============================================
-#   Lift Area Ratio — Summary
-# =============================================
+# ================================================
 #   N (observations) : 2000
-#   B (positives)    : 197
-#   Event rate (ER)  : 9.85%
-#   Max ERR (oracle) : 10.15
-# ---------------------------------------------
-#   Area model       : 192.66
-#   Area oracle      : 231.72
-#   LAR  = A / O     : 0.8314
-# ---------------------------------------------
-#   Interpretation   : model achieves 83.1% of perfect discrimination
-# =============================================
+#   B (positives)    : 197   | ER : 9.85%
+#   max ERR (oracle) : 10.15
+# ------------------------------------------------
+#   area(model)      : 192.66
+#   area(oracle)     : 231.72
+#   LAR = A/O        : 0.8314  => 83.1% of perfect
+# ================================================
 
-# plot lift curves
 lar.plot(result, title="My Model")
 ```
 
 ---
 
-## API
+## [05] - API
 
-### `LiftAreaRatio(n_percentiles=100)`
+```
+LiftAreaRatio(n_percentiles=100)
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `n_percentiles` | int | 100 | number of quantile bins |
+  .fit(scores, y)  ->  LARResult
+      scores  :: array-like  # higher = more likely positive
+      y       :: array-like  # binary labels {0, 1}
 
-### `.fit(scores, y) → LARResult`
+  .summary(result)
+  .plot(result, title, figsize, save=False, file_name="")
+```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `scores` | array-like | model risk scores (higher = more likely positive) |
-| `y` | array-like | binary labels (1 = positive, 0 = negative) |
+**`LARResult`**
 
-### `.summary(result)`
-Prints a formatted summary of the LAR result.
-
-### `.plot(result, title, figsize, save=False, file_name="")`
-Plots oracle, model and random lift curves with shaded areas A and O.
-
-### `LARResult` fields
-
-| Field | Description |
-|-------|-------------|
-| `lar` | final LAR score |
-| `area_model` | area under model lift curve |
-| `area_oracle` | area under oracle lift curve |
-| `N` | total observations |
-| `B` | total positives |
-| `event_rate` | B / N |
-| `lift_model` | DataFrame with percentile and ERR per bin |
-| `lift_oracle` | DataFrame with percentile and ERR for oracle |
+```
+.lar          # final score
+.area_model   # area under model curve
+.area_oracle  # area under oracle curve
+.N            # total observations
+.B            # total positives
+.event_rate   # B / N
+.lift_model   # DataFrame :: percentile, ERR per bin
+.lift_oracle  # DataFrame :: percentile, ERR oracle
+```
 
 ---
 
-## Requirements
+## [06] - requirements
 
-- Python >= 3.10
-- numpy>=2.2.0
-- pandas>=2.3.0
-- matplotlib>=3.10.0
+```
+python     >= 3.10
+numpy      >= 2.2.0
+pandas     >= 2.3.0
+matplotlib >= 3.10.0
+```
